@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>BabyDoge Mobile Signal V5</title>
+<style>
+:root{--bg:#080d1b;--card:#111a2d;--line:#263655;--txt:#eef3ff;--muted:#9eabc4;--green:#27d89b;--red:#ff637d;--yellow:#ffc857;--blue:#6ea8ff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#070c19,#0c1324);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,Arial,sans-serif}
+.wrap{max-width:760px;margin:auto;padding:18px 14px 40px}.head{text-align:center;padding:8px 0 14px}.head h1{font-size:27px;margin:0 0 6px}.head p{margin:0;color:var(--muted);font-size:13px;line-height:1.7}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card{background:rgba(17,26,45,.96);border:1px solid var(--line);border-radius:18px;padding:16px;margin:10px 0;box-shadow:0 8px 24px #0003}.wide{grid-column:1/-1}
+.label{color:var(--muted);font-size:13px}.value{font-size:27px;font-weight:800;margin-top:6px}.small{font-size:12px;color:var(--muted);margin-top:5px}
+.signal{text-align:center;padding:18px}.signal .big{font-size:35px;font-weight:900;letter-spacing:1px}.buy{color:var(--green)}.sell{color:var(--red)}.wait{color:var(--yellow)}
+.bar{height:17px;background:#202b43;border-radius:999px;overflow:hidden;display:flex;margin-top:9px}.bar .b{background:var(--green)}.bar .s{background:var(--red)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mini{background:#0c1426;border:1px solid #243451;border-radius:12px;padding:10px;text-align:center}.mini strong{display:block;font-size:17px;margin-top:4px}
+canvas{width:100%;height:230px;background:#0b1324;border-radius:12px;border:1px solid #23324e}
+button,select,input{font:inherit;border-radius:12px;border:1px solid #334664;background:#17233b;color:var(--txt);padding:11px}button{cursor:pointer;font-weight:700}button:active{transform:scale(.98)}.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.status{display:grid;grid-template-columns:1fr 1fr;gap:8px}.status div{padding:10px;border-radius:12px;background:#0b1324;border:1px solid #243451}.ok{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--yellow)}
+table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:8px;border-bottom:1px solid #26324b;text-align:center}th{color:var(--muted)}
+details summary{cursor:pointer;color:#dbe5ff;font-weight:700}.note{font-size:12px;line-height:1.8;color:var(--muted)}
+.alert{padding:11px;border-radius:12px;background:#171f31;border:1px solid #31415f;margin-top:8px;font-size:13px;line-height:1.7}
+footer{color:#687794;font-size:11px;text-align:center;padding:14px}
+@media(max-width:520px){.wrap{padding:12px 10px 30px}.head h1{font-size:23px}.row{grid-template-columns:1fr 1fr}.value{font-size:23px}.grid3{grid-template-columns:1fr 1fr}.grid3 .mini:last-child{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>🐶 BabyDoge Smart Mobile V5</h1>
+    <p>نسخه مستقل موبایل • Binance + DEX Screener • بدون Node.js</p>
+  </div>
+
+  <div class="card signal">
+    <div class="label">سیگنال فعلی</div>
+    <div id="signal" class="big wait">WAIT</div>
+    <div id="reason" class="small">در حال دریافت داده…</div>
+    <div class="btnrow" style="margin-top:12px">
+      <button id="soundBtn">🔔 فعال‌سازی صدا</button>
+      <button id="refreshBtn">🔄 اتصال مجدد</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card"><div class="label">قیمت</div><div id="price" class="value">—</div><div id="priceTime" class="small">—</div></div>
+    <div class="card"><div class="label">امتیاز</div><div id="score" class="value">—</div><div class="small">۰ تا ۱۰۰</div></div>
+    <div class="card"><div class="label">فشار خرید</div><div id="buyP" class="value buy">—</div><div class="bar"><div id="buyBar" class="b" style="width:50%"></div><div id="sellBar" class="s" style="width:50%"></div></div></div>
+    <div class="card"><div class="label">فشار فروش</div><div id="sellP" class="value sell">—</div><div id="imb" class="small">Order Book: —</div></div>
+  </div>
+
+  <div class="card">
+    <div class="label">📊 نمودار میله‌ای فشار خرید / فروش</div>
+    <canvas id="pressure" width="700" height="230"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="label">🎯 معامله پیشنهادی</div>
+    <div class="grid3" style="margin-top:10px">
+      <div class="mini"><span class="label">Entry</span><strong id="entry">—</strong></div>
+      <div class="mini"><span class="label">TP1</span><strong id="tp1">—</strong></div>
+      <div class="mini"><span class="label">TP2</span><strong id="tp2">—</strong></div>
+      <div class="mini"><span class="label">SL</span><strong id="sl">—</strong></div>
+      <div class="mini"><span class="label">ATR</span><strong id="atr">—</strong></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">📈 وضعیت تکنیکال</div>
+    <div class="grid3" style="margin-top:10px">
+      <div class="mini"><span class="label">RSI</span><strong id="rsi">—</strong></div>
+      <div class="mini"><span class="label">EMA20</span><strong id="ema20">—</strong></div>
+      <div class="mini"><span class="label">EMA50</span><strong id="ema50">—</strong></div>
+      <div class="mini"><span class="label">حجم غیرعادی</span><strong id="vol">—</strong></div>
+      <div class="mini"><span class="label">Fake Breakout</span><strong id="fake">—</strong></div>
+      <div class="mini"><span class="label">روند 5m</span><strong id="trend">—</strong></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">🌐 DEX Screener</div>
+    <div class="grid3" style="margin-top:10px">
+      <div class="mini"><span class="label">DEX Buy</span><strong id="dexBuy">—</strong></div>
+      <div class="mini"><span class="label">DEX Sell</span><strong id="dexSell">—</strong></div>
+      <div class="mini"><span class="label">Liquidity</span><strong id="liq">—</strong></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">📡 وضعیت اتصال</div>
+    <div class="status" style="margin-top:10px">
+      <div>Binance REST: <b id="rest" class="warn">—</b></div>
+      <div>Binance WebSocket: <b id="ws" class="warn">—</b></div>
+      <div>DEX Screener: <b id="dex" class="warn">—</b></div>
+      <div>کندل‌ها: <b id="candleCount" class="warn">0</b></div>
+    </div>
+    <div id="errorBox" class="alert">اگر دسترسی یکی از APIها توسط مرورگر/شبکه مسدود شود، متن خطا اینجا نمایش داده می‌شود.</div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>⚙️ تنظیمات سیگنال</summary>
+      <div style="display:grid;gap:8px;margin-top:12px">
+        <label class="small">تایم‌فریم تحلیل
+          <select id="tf"><option value="5m">5 دقیقه</option><option value="15m">15 دقیقه</option><option value="1h">1 ساعت</option></select>
+        </label>
+        <label class="small">حداقل امتیاز BUY
+          <input id="buyThreshold" type="number" min="50" max="95" value="70">
+        </label>
+        <label class="small">حداکثر امتیاز SELL
+          <input id="sellThreshold" type="number" min="5" max="50" value="30">
+        </label>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <div class="label">📜 آخرین سیگنال‌ها</div>
+    <table><thead><tr><th>زمان</th><th>سیگنال</th><th>امتیاز</th><th>قیمت</th></tr></thead><tbody id="history"></tbody></table>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      ⚠️ این پنل ابزار تحلیلی است و سود را تضمین نمی‌کند. سیگنال‌ها بر اساس فشار معاملات، Order Book، RSI، EMA، حجم و ساختار قیمت محاسبه می‌شوند. برای ورود واقعی، مدیریت سرمایه و حد ضرر را رعایت کن.
+    </div>
+  </div>
+  <footer>BabyDoge Smart Mobile V5 • 1MBABYDOGE/USDT</footer>
+</div>
+
+<script>
+const S = {
+  symbol:'1MBABYDOGEUSDT',
+  token:'0xc748673057861a797275CD8A068AbB95A902e8de',
+  candles:[], trades:[], pressure:[], price:null, bid:0, ask:0, lastSignal:'WAIT',
+  sound:false, ws:null, reconnectTimer:null, dexTimer:null, restTimer:null
+};
+const $=id=>document.getElementById(id);
+const fmt=(x,d=8)=>Number.isFinite(x)?Number(x).toFixed(d):'—';
+const pct=x=>Number.isFinite(x)?x.toFixed(1)+'%':'—';
+
+function setStatus(id,txt,cls='warn'){ const e=$(id); e.textContent=txt; e.className=cls; }
+function err(msg){ $('errorBox').textContent=msg; console.warn(msg); }
+function apiBase(){ return 'https://api.binance.com'; }
+
+async function fetchJSON(url, label){
+  const r=await fetch(url,{cache:'no-store',mode:'cors'});
+  if(!r.ok) throw new Error(label+' HTTP '+r.status);
+  return r.json();
+}
+
+async function loadHistory(){
+  try{
+    const tf=$('tf').value;
+    const data=await fetchJSON(`${apiBase()}/api/v3/klines?symbol=${S.symbol}&interval=${tf}&limit=200`,'Binance REST');
+    S.candles=data.map(k=>({t:k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5],closed:true}));
+    setStatus('rest','OK','ok'); $('candleCount').textContent=S.candles.length;
+    analyze(); draw();
+  }catch(e){
+    setStatus('rest','خطا','bad'); err('Binance REST: '+e.message+' — اگر این پیام ماند، شبکه/مرورگر دسترسی مستقیم به Binance API را محدود کرده است.');
+  }
+}
+
+function connectWS(){
+  if(S.ws){try{S.ws.close()}catch(e){}}
+  clearTimeout(S.reconnectTimer);
+  setStatus('ws','در حال اتصال…','warn');
+  const stream=`${S.symbol.toLowerCase()}@aggTrade/${S.symbol.toLowerCase()}@depth20@100ms/${S.symbol.toLowerCase()}@kline_${$('tf').value}`;
+  try{
+    S.ws=new WebSocket('wss://stream.binance.com:9443/stream?streams='+stream);
+    S.ws.onopen=()=>{setStatus('ws','متصل','ok');err('اتصال زنده Binance برقرار است.');};
+    S.ws.onclose=()=>{setStatus('ws','قطع شد','bad');S.reconnectTimer=setTimeout(connectWS,3000)};
+    S.ws.onerror=()=>{setStatus('ws','خطا','bad')};
+    S.ws.onmessage=ev=>{
+      try{
+        const m=JSON.parse(ev.data).data;
+        if(m.e==='aggTrade'){
+          const q=+m.p*+m.q;
+          S.price=+m.p;
+          S.trades.push({t:m.T,q,price:+m.p,sell:+m.m});
+          const cutoff=Date.now()-5*60*1000;
+          S.trades=S.trades.filter(x=>x.t>=cutoff);
+          renderPrice();
+          analyze();
+          draw();
+        } else if(m.e==='depthUpdate'){
+          const bids=m.b||[], asks=m.a||[];
+          S.bid=bids.reduce((a,x)=>a+(+x[0]*+x[1]),0);
+          S.ask=asks.reduce((a,x)=>a+(+x[0]*+x[1]),0);
+          analyze();
+        } else if(m.e==='kline'){
+          const k=m.k;
+          const c={t:k.t,o:+k.o,h:+k.h,l:+k.l,c:+k.c,v:+k.v,closed:k.x};
+          if(!S.candles.length || S.candles[S.candles.length-1].t!==c.t) S.candles.push(c);
+          else S.candles[S.candles.length-1]=c;
+          if(S.candles.length>220) S.candles.shift();
+          $('candleCount').textContent=S.candles.length;
+          analyze(); draw();
+        }
+      }catch(e){err('خطا در پردازش داده زنده: '+e.message)}
+    };
+  }catch(e){setStatus('ws','خطا','bad');err('WebSocket: '+e.message)}
+}
+
+async function pollTicker(){
+  try{
+    const x=await fetchJSON(`${apiBase()}/api/v3/ticker/price?symbol=${S.symbol}`,'Ticker');
+    S.price=+x.price; renderPrice();
+    if($('rest').textContent!=='OK') setStatus('rest','OK','ok');
+  }catch(e){ if($('rest').textContent!=='OK') setStatus('rest','خطا','bad') }
+}
+
+async function loadDEX(){
+  try{
+    const d=await fetchJSON(`https://api.dexscreener.com/latest/dex/tokens/${S.token}`,'DEX Screener');
+    const pairs=(d.pairs||[]).filter(p=>p.chainId==='bsc');
+    if(!pairs.length) throw new Error('جفت BSC پیدا نشد');
+    pairs.sort((a,b)=>(+b.liquidity?.usd||0)-(+a.liquidity?.usd||0));
+    const p=pairs[0], tx=p.txns?.h24||{};
+    const buy=+(tx.buys||0), sell=+(tx.sells||0);
+    $('dexBuy').textContent=buy; $('dexSell').textContent=sell;
+    $('liq').textContent='$'+Math.round(+(p.liquidity?.usd||0)).toLocaleString();
+    setStatus('dex','OK','ok');
+  }catch(e){setStatus('dex','خطا','bad'); if($('errorBox').textContent.includes('اگر')) err('DEX Screener: '+e.message)}
+}
+
+function ema(arr,n){
+  if(arr.length<n) return NaN;
+  const k=2/(n+1); let e=arr.slice(0,n).reduce((a,b)=>a+b,0)/n;
+  for(let i=n;i<arr.length;i++) e=arr[i]*k+e*(1-k); return e;
+}
+function rsi(arr,n=14){
+  if(arr.length<n+1)return NaN; let g=0,l=0;
+  for(let i=arr.length-n;i<arr.length;i++){let d=arr[i]-arr[i-1];if(d>=0)g+=d;else l-=d}
+  if(l===0)return 100; return 100-100/(1+g/l);
+}
+function atr(cs,n=14){
+  if(cs.length<n+1)return NaN; let trs=[];
+  for(let i=1;i<cs.length;i++) trs.push(Math.max(cs[i].h-cs[i].l,Math.abs(cs[i].h-cs[i-1].c),Math.abs(cs[i].l-cs[i-1].c)));
+  return trs.slice(-n).reduce((a,b)=>a+b,0)/n;
+}
+function analyze(){
+  const cs=S.candles.filter(x=>x.closed||x===S.candles[S.candles.length-1]);
+  if(cs.length<55)return;
+  const closes=cs.map(x=>x.c), e20=ema(closes,20), e50=ema(closes,50), R=rsi(closes), A=atr(cs);
+  $('rsi').textContent=fmt(R,1); $('ema20').textContent=fmt(e20,8); $('ema50').textContent=fmt(e50,8); $('atr').textContent=fmt(A,9);
+  const recent=cs.slice(-20), avgV=recent.slice(0,-1).reduce((a,b)=>a+b.v,0)/Math.max(1,recent.length-1), vr=recent.at(-1).v/Math.max(avgV,1e-12);
+  $('vol').textContent=vr.toFixed(2)+'x';
+  const last=cs.at(-1), prev=cs.at(-2);
+  const high20=Math.max(...cs.slice(-21,-1).map(x=>x.h)), low20=Math.min(...cs.slice(-21,-1).map(x=>x.l));
+  const fake=(last.h>high20 && last.c<high20)||(last.l<low20 && last.c>low20);
+  $('fake').textContent=fake?'⚠️ بله':'خیر';
+  const trend=e20>e50?'UP':'DOWN'; $('trend').textContent=trend==='UP'?'صعودی':'نزولی';
+  const total=S.trades.reduce((a,b)=>a+b.q,0), sell=S.trades.filter(x=>x.sell).reduce((a,b)=>a+b.q,0), buy=total-sell;
+  const bp=total?buy/total*100:50, sp=100-bp; $('buyP').textContent=pct(bp); $('sellP').textContent=pct(sp);
+  $('buyBar').style.width=bp+'%'; $('sellBar').style.width=sp+'%';
+  const depth=(S.bid+S.ask)?(S.bid-S.ask)/(S.bid+S.ask):0; $('imb').textContent='Order Book: '+(depth*100).toFixed(1)+'%';
+  let score=50;
+  score += trend==='UP'?12:-12;
+  score += R>50&&R<72?12:R>=72?-6:R<35?-10:0;
+  score += bp>55?Math.min(18,(bp-50)*0.9):Math.max(-18,(bp-50)*0.9);
+  score += depth>0.03?10:depth<-0.03?-10:0;
+  score += vr>1.5?(last.c>prev.c?8:-8):0;
+  if(fake) score += last.c>prev.c?-8:8;
+  score=Math.max(0,Math.min(100,score)); $('score').textContent=Math.round(score);
+  let sig='WAIT';
+  const bt=+$('buyThreshold').value, st=+$('sellThreshold').value;
+  if(score>=bt && bp>=55 && depth>=-0.02 && !fake) sig='BUY';
+  if(score<=st && sp>=55 && depth<=0.02 && !fake) sig='SELL';
+  const reason=sig==='BUY'?'فشار خرید + روند/مومنتوم هم‌جهت است.':sig==='SELL'?'فشار فروش + روند/مومنتوم هم‌جهت است.':'تأیید کافی برای ورود وجود ندارد.';
+  setSignal(sig,reason);
+  if(Number.isFinite(S.price)&&Number.isFinite(A)){
+    const p=S.price;
+    $('entry').textContent=fmt(p,8);
+    if(sig==='BUY'){ $('tp1').textContent=fmt(p+A*1.2,8); $('tp2').textContent=fmt(p+A*2.0,8); $('sl').textContent=fmt(p-A*0.9,8); }
+    else if(sig==='SELL'){ $('tp1').textContent=fmt(p-A*1.2,8); $('tp2').textContent=fmt(p-A*2.0,8); $('sl').textContent=fmt(p+A*0.9,8); }
+    else { $('tp1').textContent='—';$('tp2').textContent='—';$('sl').textContent='—';}
+  }
+}
+function setSignal(sig,reason){
+  const e=$('signal'); e.textContent=sig; e.className='big '+(sig==='BUY'?'buy':sig==='SELL'?'sell':'wait'); $('reason').textContent=reason;
+  if(sig!==S.lastSignal && (sig==='BUY'||sig==='SELL')){ addHistory(sig); if(S.sound) beep(sig); }
+  S.lastSignal=sig;
+}
+function addHistory(sig){
+  const tr=document.createElement('tr'); tr.innerHTML=`<td>${new Date().toLocaleTimeString('fa-IR')}</td><td class="${sig==='BUY'?'buy':'sell'}">${sig}</td><td>${$('score').textContent}</td><td>${fmt(S.price,8)}</td>`;
+  $('history').prepend(tr); while($('history').children.length>8)$('history').lastChild.remove();
+}
+function renderPrice(){ $('price').textContent=fmt(S.price,8); $('priceTime').textContent=new Date().toLocaleTimeString('fa-IR'); }
+function beep(sig){
+  try{const C=window.AudioContext||window.webkitAudioContext,ctx=new C(),o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=sig==='BUY'?880:330;o.connect(g);g.connect(ctx.destination);g.gain.value=.05;o.start();o.stop(ctx.currentTime+.25)}catch(e){}
+}
+function draw(){
+  const c=$('pressure'),x=c.getContext('2d'),w=c.width,h=c.height;x.clearRect(0,0,w,h);
+  x.fillStyle='#0b1324';x.fillRect(0,0,w,h);
+  const bars=S.trades.length?10:0; if(!bars)return;
+  const cutoff=Date.now()-5*60*1000, bins=Array.from({length:bars},()=>({b:0,s:0}));
+  for(const t of S.trades){let i=Math.min(bars-1,Math.max(0,Math.floor((t.t-cutoff)/(5*60*1000)*bars)));if(t.sell)bins[i].s+=t.q;else bins[i].b+=t.q}
+  const max=Math.max(1,...bins.map(z=>Math.max(z.b,z.s))); const bw=w/bars-7;
+  bins.forEach((z,i)=>{const bh=z.b/max*(h-25),sh=z.s/max*(h-25),xx=i*(w/bars)+4;x.fillStyle='#27d89b';x.fillRect(xx,h-5-bh,bw/2,bh);x.fillStyle='#ff637d';x.fillRect(xx+bw/2,h-5-sh,bw/2,sh)});
+}
+$('soundBtn').onclick=()=>{S.sound=!S.sound;$('soundBtn').textContent=S.sound?'🔔 صدا فعال است':'🔕 فعال‌سازی صدا';if(S.sound)beep('BUY')};
+$('refreshBtn').onclick=()=>{loadHistory();connectWS();loadDEX()};
+$('tf').onchange=()=>{loadHistory();connectWS()};
+$('buyThreshold').onchange=analyze;$('sellThreshold').onchange=analyze;
+
+async function start(){
+  err('در حال اتصال به Binance و DEX…');
+  await loadHistory();
+  connectWS();
+  loadDEX();
+  setInterval(pollTicker,5000);
+  setInterval(loadDEX,15000);
+  setInterval(()=>{if(!S.ws||S.ws.readyState!==1)connectWS()},7000);
+}
+start();
+</script>
+</body>
+</html>
