@@ -366,5 +366,147 @@ async function start(){
 }
 start();
 </script>
+
+<style>
+#fundamental-news-panel{margin:18px 0;padding:16px;border:1px solid #30435b;border-radius:18px;background:#0d1726;color:#eaf1ff;text-align:right;font-family:inherit}
+#fundamental-news-panel *{box-sizing:border-box}#fundamental-news-panel .fn-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+#fundamental-news-panel h2{font-size:1.1rem;margin:0 0 6px}#fundamental-news-panel .fn-note{color:#9fb0c9;font-size:.8rem;line-height:1.8}
+#fundamental-news-panel button{border:1px solid #344a64;border-radius:10px;background:#182942;color:white;padding:8px 10px;font:inherit;cursor:pointer}
+#fundamental-news-panel .fn-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+#fundamental-news-panel .fn-stat,#fundamental-news-panel .fn-item{background:#101d2d;border:1px solid #263951;border-radius:12px;padding:11px;margin-top:8px}
+#fundamental-news-panel .fn-stat small{display:block;color:#9fb0c9;font-size:.75rem}#fundamental-news-panel .fn-stat strong{display:block;margin-top:5px}
+#fundamental-news-panel .fn-filters{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}#fundamental-news-panel .fn-filter{font-size:.8rem}#fundamental-news-panel .fn-filter.active{background:#23466a}
+#fundamental-news-panel .fn-item a{color:#dbeafe;text-decoration:none;font-weight:700;line-height:1.7}
+#fundamental-news-panel .fn-meta{display:flex;gap:8px;flex-wrap:wrap;color:#91a4bf;font-size:.74rem;margin-top:7px}
+#fundamental-news-panel .fn-tag{border-radius:6px;padding:3px 7px;font-size:.72rem}#fundamental-news-panel .fn-high{background:#51252b;color:#ffc5c9}#fundamental-news-panel .fn-med{background:#4a3b1d;color:#ffe2a1}#fundamental-news-panel .fn-low{background:#183b35;color:#a8f0d8}
+#fundamental-news-panel .fn-empty{padding:14px;border:1px dashed #344a64;border-radius:10px;color:#b8c6da;font-size:.85rem;line-height:1.8}
+@media(min-width:600px){#fundamental-news-panel .fn-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+<section id="fundamental-news-panel" dir="rtl" aria-live="polite">
+ <div class="fn-head"><div><h2>📰 اخبار فاندامنتال و هشدار ریسک بازار</h2><p class="fn-note">پایش جنگ و تنش ژئوپلیتیک، نرخ بهره و تورم، مقررات، هک و ریسک‌های بازار کریپتو</p></div><button type="button" id="fn-refresh">↻ بروزرسانی خبرها</button></div>
+ <div class="fn-summary"><div class="fn-stat"><small>وضعیت ریسک خبرهای دریافتی</small><strong id="fn-risk">در انتظار دریافت خبر</strong></div><div class="fn-stat"><small>خبرهای پرریسک شناسایی‌شده</small><strong id="fn-high-count">—</strong></div><div class="fn-stat"><small>آخرین بررسی</small><strong id="fn-updated">—</strong></div></div>
+ <div class="fn-filters"><button class="fn-filter active" data-fn-filter="all">همه</button><button class="fn-filter" data-fn-filter="high">ریسک بالا</button><button class="fn-filter" data-fn-filter="macro">اقتصاد کلان</button><button class="fn-filter" data-fn-filter="geo">جنگ و تنش</button><button class="fn-filter" data-fn-filter="crypto">کریپتو و امنیت</button></div>
+ <div id="fn-news-list"><div class="fn-empty">در حال دریافت خبرها…</div></div>
+ <p class="fn-note">این امتیاز فقط هشدار کلیدواژه‌ای است، نه احتمال قطعی ریزش یا سیگنال خریدوفروش. تیترهای مهم را از منبع اصلی بررسی کنید.</p>
+</section>
+<script>
+(()=>{const p=document.getElementById('fundamental-news-panel');if(!p||p.dataset.init)return;p.dataset.init='1';const $=s=>p.querySelector(s),list=$('#fn-news-list'),risk=$('#fn-risk'),high=$('#fn-high-count'),updated=$('#fn-updated'),refresh=$('#fn-refresh');let data=[],filter='all';
+const rules={geo:/war|armed conflict|invasion|missile|military|geopolit|iran|israel|ukraine|russia|sanction|blockade|جنگ|حمله|موشک|تحریم|درگیری|تنش/i,macro:/federal reserve|\bfed\b|interest rate|rate hike|rate cut|inflation|\bcpi\b|\bfomc\b|powell|central bank|treasury yield|unemployment|recession|tariff|نرخ بهره|تورم|بانک مرکزی|فدرال رزرو/i,crypto:/hack|exploit|breach|lawsuit|\bsec\b|regulation|etf|liquidation|bankruptcy|stablecoin|depeg|هک|مقررات|ورشکستگی/i};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function analyse(a){let title=String(a.title||a.headline||''),desc=String(a.description||a.summary||''),t=title+' '+desc,cats=Object.keys(rules).filter(k=>rules[k].test(t)),n=(rules.geo.test(t)?3:0)+(/attack|escalation|missile|war declared|حمله|تشدید/i.test(t)?2:0)+(/rate hike|hot inflation|hawkish|افزایش نرخ بهره/i.test(t)?2:0)+(/hack|exploit|breach|bankruptcy|depeg|ban |هک|ورشکستگی/i.test(t)?2:0)+(/etf|regulation|sanction|tariff|liquidation|تحریم/i.test(t)?1:0);if(/approval|inflow|rate cut|ceasefire|peace deal|آتش‌بس/i.test(t)&&!/rejected|denied|failed|رد شد/i.test(t))n=Math.max(0,n-1);return{title,desc,cats,n,level:n>=4?'high':n>=2?'med':'low',source:a.source?.name||a.source||a.publisher||'منبع خبر',date:a.pubDate||a.publishedAt||a.published_at||a.date||'',url:a.link||a.url||'#'}}
+function render(){let d=data.map(analyse),h=d.filter(a=>a.level==='high').length;risk.textContent=d.length?(h>=3?'بالا — بررسی دستی لازم':h?'هشدار — خبر پرریسک':'پایین در خبرهای فعلی'):'خبر موجود نیست';high.textContent=h;updated.textContent=new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});d=d.filter(a=>filter==='all'||filter==='high'&&a.level==='high'||['geo','macro','crypto'].includes(filter)&&a.cats.includes(filter));if(!d.length){list.innerHTML='<div class="fn-empty">برای این فیلتر خبری پیدا نشد.</div>';return}list.innerHTML=d.slice(0,25).map(a=>{let badge=a.level==='high'?'<span class="fn-tag fn-high">ریسک بالقوه بالا</span>':a.level==='med'?'<span class="fn-tag fn-med">نیازمند بررسی</span>':'<span class="fn-tag fn-low">اثر نامشخص/کم</span>',names=a.cats.map(c=>({geo:'ژئوپلیتیک',macro:'اقتصاد کلان',crypto:'کریپتو/امنیت'}[c])).join(' · ')||'عمومی',url=/^https?:\/\//i.test(a.url)?a.url:'#',dt='';return '<article class="fn-item"><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(a.title||'بدون عنوان')+'</a><div class="fn-meta">'+badge+'<span>'+esc(a.source)+'</span><span>'+esc(a.date||'زمان نامشخص')+'</span><span>'+esc(names)+'</span></div>'+(a.desc?'<p class="fn-note">'+esc(a.desc.slice(0,240))+'</p>':'')+'</article>'}).join('')}
+async function load(){refresh.disabled=true;refresh.textContent='در حال دریافت…';list.innerHTML='<div class="fn-empty">در حال دریافت خبرهای تازه…</div>';try{let r=await fetch('https://cryptocurrency.cv/api/news?limit=50',{cache:'no-store'});if(!r.ok)throw Error();let j=await r.json();data=Array.isArray(j)?j:(j.articles||j.data||j.results||[]);if(!data.length)throw Error();render()}catch(e){list.innerHTML='<div class="fn-empty">خبر زنده فعلاً دریافت نشد. اتصال یا سرویس منبع خبر ممکن است در دسترس نباشد. دوباره تلاش کنید؛ خبر نمونه یا ساختگی نمایش داده نمی‌شود.</div>';risk.textContent='داده در دسترس نیست';high.textContent='—';updated.textContent='—'}finally{refresh.disabled=false;refresh.textContent='↻ بروزرسانی خبرها'}}
+p.querySelectorAll('[data-fn-filter]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.fnFilter;p.querySelectorAll('[data-fn-filter]').forEach(x=>x.classList.toggle('active',x===b));render()}));refresh.addEventListener('click',load);load()})();
+</script>
+
+
+<style>
+#smart-combined-signal{margin:18px 0;padding:16px;border:1px solid #2c4058;border-radius:18px;background:linear-gradient(145deg,#111d2e,#09121e);color:#edf4ff;text-align:right;font-family:inherit}
+#smart-combined-signal *{box-sizing:border-box}#smart-combined-signal h2{font-size:1.15rem;margin:0 0 5px}
+#smart-combined-signal .sc-muted{color:#9fb1c9;font-size:.8rem;line-height:1.8}
+#smart-combined-signal .sc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}
+#smart-combined-signal .sc-card{padding:11px;border:1px solid #293c53;border-radius:12px;background:#101d2d;min-width:0}
+#smart-combined-signal .sc-card small{display:block;color:#9fb1c9;font-size:.75rem}
+#smart-combined-signal .sc-card strong{display:block;font-size:1rem;margin-top:5px;overflow-wrap:anywhere}
+#smart-combined-signal .sc-signal{padding:14px;border:1px solid #344a64;border-radius:13px;background:#0c1726;margin:12px 0}
+#smart-combined-signal .sc-signal strong{font-size:1.25rem}
+#smart-combined-signal .sc-bar{height:8px;background:#24354a;border-radius:9px;overflow:hidden;margin:10px 0}
+#smart-combined-signal .sc-bar span{display:block;height:100%;width:50%;background:#7e9fcb;transition:width .2s}
+#smart-combined-signal .sc-btn{border:1px solid #49617f;background:#182942;color:white;border-radius:10px;padding:9px 12px;font:inherit;cursor:pointer}
+#smart-combined-signal .sc-list{padding-right:18px;font-size:.82rem;line-height:1.9;color:#d2deee}
+#smart-combined-signal .sc-foot{font-size:.75rem;line-height:1.8;color:#9fb1c9}
+@media(min-width:620px){#smart-combined-signal .sc-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+<section id="smart-combined-signal" dir="rtl" aria-live="polite">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+  <div><h2>🧠 سیگنال ترکیبی هوشمند BabyDoge</h2><div class="sc-muted">ترکیب روند بیت‌کوین، کندل، حجم و فشار خرید، همراه با هشدار خبرهای بنیادی</div></div>
+  <button class="sc-btn" id="sc-refresh" type="button">↻ تحلیل مجدد</button>
+ </div>
+ <div class="sc-signal"><div class="sc-muted">جمع‌بندی الگوریتم از داده‌های فعلی</div><strong id="sc-decision">در حال دریافت داده‌ها…</strong><div class="sc-bar"><span id="sc-meter"></span></div><div class="sc-muted" id="sc-confidence">قدرت هم‌جهتی سیگنال: —</div><div class="sc-muted" id="sc-explain">تا دریافت داده‌های بازار، سیگنال صادر نمی‌شود.</div></div>
+ <div class="sc-grid">
+  <div class="sc-card"><small>BTC / روند کوتاه‌مدت</small><strong id="sc-btc">در حال بررسی…</strong></div>
+  <div class="sc-card"><small>BabyDoge / روند و RSI</small><strong id="sc-baby">در حال بررسی…</strong></div>
+  <div class="sc-card"><small>فشار خرید و فروش</small><strong id="sc-pressure">در حال بررسی…</strong></div>
+  <div class="sc-card"><small>ریسک خبرهای بنیادی</small><strong id="sc-news">در حال بررسی…</strong></div>
+  <div class="sc-card"><small>قیمت BTC</small><strong id="sc-btc-price">—</strong></div>
+  <div class="sc-card"><small>قیمت BabyDoge</small><strong id="sc-baby-price">—</strong></div>
+ </div>
+ <div class="sc-card"><strong>دلایل سیگنال</strong><ul class="sc-list" id="sc-reasons"><li>داده‌های بازار هنوز دریافت نشده‌اند.</li></ul></div>
+ <p class="sc-foot">این نسخه یک موتور امتیازدهی قانون‌محور است، نه مدل یادگیری ماشین آموزش‌دیده. «قدرت هم‌جهتی» احتمال موفقیت معامله نیست. اگر داده‌ای ناقص باشد یا خبرها دریافت نشوند، نتیجه باید با احتیاط تفسیر شود. این ابزار توصیه مالی شخصی یا تضمین سود نیست.</p>
+</section>
+<script>
+(function(){
+ const root=document.getElementById('smart-combined-signal');if(!root||root.dataset.ready)return;root.dataset.ready='1';
+ const $=id=>root.querySelector('#'+id);
+ const fmt=(v,d=5)=>Number.isFinite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'—';
+ const set=(id,v)=>$(id).textContent=v;
+ const state={busy:false};
+ async function json(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json();}
+ function rsi(closes,n=14){if(closes.length<=n)return 50;let up=0,down=0;for(let i=closes.length-n;i<closes.length;i++){const d=closes[i]-closes[i-1];if(d>0)up+=d;else down-=d;}if(down===0)return 100;return 100-100/(1+up/down);}
+ function ema(vals,n){if(vals.length<n)return vals.at(-1)||0;let e=vals.slice(0,n).reduce((a,b)=>a+b,0)/n;const k=2/(n+1);for(let i=n;i<vals.length;i++)e=vals[i]*k+e*(1-k);return e;}
+ function candle(c){const [o,h,l,cl]=c;const body=Math.abs(cl-o),range=Math.max(h-l,1e-15),upper=h-Math.max(o,cl),lower=Math.min(o,cl)-l;if(body/range<.1)return 'دوجی / بلاتکلیفی';if(lower>body*2&&upper<body)return cl>=o?'چکش صعودی احتمالی':'سایه پایینی بلند';if(upper>body*2&&lower<body)return 'شهاب‌سنگ / فشار فروش احتمالی';if(cl>o)return 'کندل صعودی';return 'کندل نزولی';}
+ async function load(){
+  if(state.busy)return;state.busy=true;$('sc-refresh').disabled=true;set('sc-decision','در حال تحلیل چندعاملی…');
+  const reasons=[];let btc=null,baby=null,newsRisk=0,newsStatus='خبر در دسترس نیست',pressure=0,pressureValid=false;
+  try{
+   const [bkl,babkl]=await Promise.all([
+    json('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=15m&limit=80'),
+    json('https://api.binance.com/api/v3/klines?symbol=BABYDOGEUSDT&interval=15m&limit=80')
+   ]);
+   function parse(rows){return rows.map(x=>({o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5],q:+x[7],trades:+x[8],buy:+x[10]}));}
+   btc=parse(bkl);baby=parse(babkl);
+  }catch(e){reasons.push('دریافت کندل BTC یا BabyDoge از صرافی ناموفق بود؛ احتمالاً نماد یا دسترسی API مشکل دارد.');}
+  if(btc&&baby){
+   const bc=btc.map(x=>x.c),ac=baby.map(x=>x.c),bLast=btc.at(-1),aLast=baby.at(-1);
+   const btcRsi=rsi(bc),babyRsi=rsi(ac),btcFast=ema(bc.slice(-40),9),btcSlow=ema(bc.slice(-40),21),aFast=ema(ac.slice(-40),9),aSlow=ema(ac.slice(-40),21);
+   const btcTrend=bc.at(-1)>btcFast&&btcFast>btcSlow?1:bc.at(-1)<btcFast&&btcFast<btcSlow?-1:0;
+   const babyTrend=ac.at(-1)>aFast&&aFast>aSlow?1:ac.at(-1)<aFast&&aFast<aSlow?-1:0;
+   const buySum=baby.slice(-8).reduce((s,x)=>s+x.buy,0),volSum=baby.slice(-8).reduce((s,x)=>s+x.v,0),buyRatio=volSum?buySum/volSum:0.5;
+   pressure=buyRatio>.55?1:buyRatio<.45?-1:0;pressureValid=volSum>0;
+   set('sc-btc',(btcTrend>0?'صعودی':btcTrend<0?'نزولی':'خنثی')+' · RSI '+fmt(btcRsi,1));
+   set('sc-baby',(babyTrend>0?'صعودی':babyTrend<0?'نزولی':'خنثی')+' · RSI '+fmt(babyRsi,1)+' · '+candle([aLast.o,aLast.h,aLast.l,aLast.c]));
+   set('sc-pressure',pressureValid?(buyRatio*100).toFixed(1)+'٪ حجم خرید تهاجمی '+(pressure>0?'(غالب)':pressure<0?'(ضعیف)':'(متعادل)'):'داده نامعتبر');
+   set('sc-btc-price','$'+fmt(bLast.c,2));set('sc-baby-price',fmt(aLast.c,12));
+   if(btcTrend<0)reasons.push('روند کوتاه‌مدت بیت‌کوین نزولی است؛ این وضعیت می‌تواند فشار مضاعفی بر آلت‌کوین‌ها وارد کند.');
+   else if(btcTrend>0)reasons.push('روند کوتاه‌مدت بیت‌کوین صعودی است و فعلاً از سمت بازار کلان کریپتو حمایت می‌کند.');
+   else reasons.push('روند بیت‌کوین یک‌جهته نیست؛ برای آلت‌کوین‌ها ریسک سیگنال‌های متناقض وجود دارد.');
+   if(babyTrend<0)reasons.push('روند میانگین‌های کوتاه‌مدت BabyDoge نزولی است.');else if(babyTrend>0)reasons.push('روند میانگین‌های کوتاه‌مدت BabyDoge صعودی است.');
+   if(babyRsi>70)reasons.push('RSI بالاست؛ خطر داغ‌شدن حرکت و اصلاح کوتاه‌مدت را در نظر بگیر.');else if(babyRsi<30)reasons.push('RSI پایین است؛ احتمال فروش افراطی مطرح است اما به‌تنهایی سیگنال خرید نیست.');
+   if(pressure<0)reasons.push('حجم خرید تهاجمی پایین‌تر از حجم کل است؛ فشار فروش ممکن است غالب باشد.');else if(pressure>0)reasons.push('حجم خرید تهاجمی نسبتاً قوی است؛ این داده به‌تنهایی تضمین ادامه صعود نیست.');else reasons.push('فشار خرید و فروش فعلاً برتری واضحی نشان نمی‌دهد.');
+   state.score=0.35*btcTrend+0.3*babyTrend+0.2*pressure;
+  }else{state.score=0;set('sc-btc','داده در دسترس نیست');set('sc-baby','داده در دسترس نیست');set('sc-pressure','داده در دسترس نیست');}
+  try{
+   const payload=await json('https://cryptocurrency.cv/api/news?limit=50');
+   const arr=Array.isArray(payload)?payload:(payload.articles||payload.data||payload.results||[]);
+   const textNews=arr.map(a=>(a.title||'')+' '+(a.description||'')).join(' ');
+   const hits=[
+    [/war|invasion|missile|airstrike|military escalation|جنگ|حمله نظامی|موشک|تشدید تنش/i,3,'خبر ژئوپلیتیک پرریسک شناسایی شد.'],
+    [/rate hike|hawkish|hot inflation|higher for longer|نرخ بهره افزایش|تورم بالاتر/i,2,'خبر بالقوه منفی درباره نرخ بهره یا تورم شناسایی شد.'],
+    [/hack|exploit|breach|bankruptcy|depeg|exchange insolvency|هک|ورشکستگی/i,3,'خبر ریسک امنیتی یا مالی در بازار کریپتو شناسایی شد.'],
+    [/sanction|regulatory crackdown|ban on crypto|تحریم|ممنوعیت ارز دیجیتال/i,2,'خبر تحریم یا تشدید مقررات شناسایی شد.']
+   ];
+   const matched=hits.filter(x=>x[0].test(textNews));newsRisk=matched.reduce((s,x)=>s+x[1],0);newsStatus=matched.length?'هشدار: '+matched.length+' دسته خبر پرریسک':'ریسک بالا در تیترهای دریافت‌شده یافت نشد';
+   if(matched.length)matched.forEach(x=>reasons.push(x[2]));else reasons.push('در تیترهای دریافتی کلیدواژه پرریسک شناخته‌شده پیدا نشد؛ این به معنی نبود خبر بد نیست.');
+   if(!arr.length)throw Error('empty news');
+  }catch(e){newsRisk=null;newsStatus='فید خبری در دسترس نیست';reasons.push('خبر زنده دریافت نشد؛ بخش بنیادی قابل تأیید نیست و نباید آن را کم‌ریسک فرض کرد.');}
+  set('sc-news',newsStatus);
+  if(newsRisk!==null)state.score=(state.score||0)-Math.min(.6,newsRisk*.12);
+  const score=state.score||0;let decision='صبر / سیگنال نامشخص';
+  if(btc&&baby&&newsRisk!==null){
+   if(score>=.48)decision='تمایل صعودی — تأیید چندعاملی';
+   else if(score<=-.48)decision='تمایل نزولی — ریسک فشار فروش';
+   else decision='خنثی — تأیید کافی وجود ندارد';
+  }else decision='سیگنال ناقص — داده‌ها تأیید نشدند';
+  set('sc-decision',decision);
+  const strength=Math.round(Math.min(1,Math.abs(score))*100);set('sc-confidence','قدرت هم‌جهتی عوامل: '+strength+'٪ · این عدد احتمال موفقیت نیست');
+  $('sc-meter').style.width=strength+'%';
+  set('sc-explain',newsRisk===null?'فید خبر ناموفق است؛ قبل از هر تصمیم دستی بررسی کن.':score<=-.48?'مجموع عوامل به سمت ریسک نزولی متمایل است.':score>=.48?'مجموع عوامل به سمت تمایل صعودی متمایل است.':'عوامل با هم توافق کافی ندارند؛ صبر منطقی‌تر از سیگنال اجباری است.');
+  $('sc-reasons').innerHTML=reasons.map(x=>'<li>'+x.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</li>').join('');
+  state.busy=false;$('sc-refresh').disabled=false;
+ }
+ $('sc-refresh').addEventListener('click',load);load();
+})();
+</script>
+
 </body>
 </html>
