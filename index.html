@@ -155,7 +155,7 @@ const pct=x=>Number.isFinite(x)?x.toFixed(1)+'%':'—';
 
 function setStatus(id,txt,cls='warn'){ const e=$(id); e.textContent=txt; e.className=cls; }
 function err(msg){ $('errorBox').textContent=msg; console.warn(msg); }
-function apiBase(){ return 'https://api.binance.com'; }
+function apiBase(){ return 'https://data-api.binance.vision'; }
 
 async function fetchJSON(url, label){
   const r=await fetch(url,{cache:'no-store',mode:'cors'});
@@ -181,7 +181,7 @@ function connectWS(){
   setStatus('ws','در حال اتصال…','warn');
   const stream=`${S.symbol.toLowerCase()}@aggTrade/${S.symbol.toLowerCase()}@depth20@100ms/${S.symbol.toLowerCase()}@kline_${$('tf').value}`;
   try{
-    S.ws=new WebSocket('wss://stream.binance.com:9443/stream?streams='+stream);
+    S.ws=new WebSocket('wss://data-stream.binance.vision/stream?streams='+stream);
     S.ws.onopen=()=>{setStatus('ws','متصل','ok');err('اتصال زنده Binance برقرار است.');};
     S.ws.onclose=()=>{setStatus('ws','قطع شد','bad');S.reconnectTimer=setTimeout(connectWS,3000)};
     S.ws.onerror=()=>{setStatus('ws','خطا','bad')};
@@ -394,9 +394,38 @@ start();
 const rules={geo:/war|armed conflict|invasion|missile|military|geopolit|iran|israel|ukraine|russia|sanction|blockade|جنگ|حمله|موشک|تحریم|درگیری|تنش/i,macro:/federal reserve|\bfed\b|interest rate|rate hike|rate cut|inflation|\bcpi\b|\bfomc\b|powell|central bank|treasury yield|unemployment|recession|tariff|نرخ بهره|تورم|بانک مرکزی|فدرال رزرو/i,crypto:/hack|exploit|breach|lawsuit|\bsec\b|regulation|etf|liquidation|bankruptcy|stablecoin|depeg|هک|مقررات|ورشکستگی/i};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function analyse(a){let title=String(a.title||a.headline||''),desc=String(a.description||a.summary||''),t=title+' '+desc,cats=Object.keys(rules).filter(k=>rules[k].test(t)),n=(rules.geo.test(t)?3:0)+(/attack|escalation|missile|war declared|حمله|تشدید/i.test(t)?2:0)+(/rate hike|hot inflation|hawkish|افزایش نرخ بهره/i.test(t)?2:0)+(/hack|exploit|breach|bankruptcy|depeg|ban |هک|ورشکستگی/i.test(t)?2:0)+(/etf|regulation|sanction|tariff|liquidation|تحریم/i.test(t)?1:0);if(/approval|inflow|rate cut|ceasefire|peace deal|آتش‌بس/i.test(t)&&!/rejected|denied|failed|رد شد/i.test(t))n=Math.max(0,n-1);return{title,desc,cats,n,level:n>=4?'high':n>=2?'med':'low',source:a.source?.name||a.source||a.publisher||'منبع خبر',date:a.pubDate||a.publishedAt||a.published_at||a.date||'',url:a.link||a.url||'#'}}
-function render(){let d=data.map(analyse),h=d.filter(a=>a.level==='high').length;risk.textContent=d.length?(h>=3?'بالا — بررسی دستی لازم':h?'هشدار — خبر پرریسک':'پایین در خبرهای فعلی'):'خبر موجود نیست';high.textContent=h;updated.textContent=new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});d=d.filter(a=>filter==='all'||filter==='high'&&a.level==='high'||['geo','macro','crypto'].includes(filter)&&a.cats.includes(filter));if(!d.length){list.innerHTML='<div class="fn-empty">برای این فیلتر خبری پیدا نشد.</div>';return}list.innerHTML=d.slice(0,25).map(a=>{let badge=a.level==='high'?'<span class="fn-tag fn-high">ریسک بالقوه بالا</span>':a.level==='med'?'<span class="fn-tag fn-med">نیازمند بررسی</span>':'<span class="fn-tag fn-low">اثر نامشخص/کم</span>',names=a.cats.map(c=>({geo:'ژئوپلیتیک',macro:'اقتصاد کلان',crypto:'کریپتو/امنیت'}[c])).join(' · ')||'عمومی',url=/^https?:\/\//i.test(a.url)?a.url:'#',dt='';return '<article class="fn-item"><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(a.title||'بدون عنوان')+'</a><div class="fn-meta">'+badge+'<span>'+esc(a.source)+'</span><span>'+esc(a.date||'زمان نامشخص')+'</span><span>'+esc(names)+'</span></div>'+(a.desc?'<p class="fn-note">'+esc(a.desc.slice(0,240))+'</p>':'')+'</article>'}).join('')}
-async function load(){refresh.disabled=true;refresh.textContent='در حال دریافت…';list.innerHTML='<div class="fn-empty">در حال دریافت خبرهای تازه…</div>';try{let r=await fetch('https://cryptocurrency.cv/api/news?limit=50',{cache:'no-store'});if(!r.ok)throw Error();let j=await r.json();data=Array.isArray(j)?j:(j.articles||j.data||j.results||[]);if(!data.length)throw Error();render()}catch(e){list.innerHTML='<div class="fn-empty">خبر زنده فعلاً دریافت نشد. اتصال یا سرویس منبع خبر ممکن است در دسترس نباشد. دوباره تلاش کنید؛ خبر نمونه یا ساختگی نمایش داده نمی‌شود.</div>';risk.textContent='داده در دسترس نیست';high.textContent='—';updated.textContent='—'}finally{refresh.disabled=false;refresh.textContent='↻ بروزرسانی خبرها'}}
-p.querySelectorAll('[data-fn-filter]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.fnFilter;p.querySelectorAll('[data-fn-filter]').forEach(x=>x.classList.toggle('active',x===b));render()}));refresh.addEventListener('click',load);load()})();
+function render(){let d=data.map(analyse),h=d.filter(a=>a.level==='high').length;risk.textContent=d.length?(h>=3?'بالا — بررسی دستی لازم':h?'هشدار — خبر پرریسک':'پایین در خبرهای فعلی'):'خبر موجود نیست';high.textContent=h;updated.textContent=new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});d=d.filter(a=>filter==='all'||filter==='high'&&a.level==='high'||['geo','macro','crypto'].includes(filter)&&a.cats.includes(filter));if(!d.length){list.innerHTML='<div class="fn-empty">برای این فیلتر خبری پیدا نشد.</div>';return}list.innerHTML=d.slice(0,25).map(a=>{let badge=a.level==='high'?'<span class="fn-tag fn-high">ریسک بالقوه بالا</span>':a.level==='med'?'<span class="fn-tag fn-med">نیازمند بررسی</span>':'<span class="fn-tag fn-low">اثر نامشخص/کم</span>',names=a.cats.map(c=>({geo:'ژئوپلیتیک',macro:'اقتصاد کلان',crypto:'کریپتو/امنیت'}[c])).join(' · ')||'عمومی',url=/^https?:\/\//i.test(a.url)?a.url:'#',dt='';return '<article class="fn-item"><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(a.titleFa||a.title||a.headline||'بدون عنوان')+'</a><div class="fn-meta">'+badge+'<span>'+esc(a.source)+'</span><span>'+esc(a.date||'زمان نامشخص')+'</span><span>'+esc(names)+'</span></div>'+((a.descFa||a.desc||a.description||a.summary)?'<p class="fn-note">'+esc((a.descFa||a.desc||a.description||a.summary).slice(0,240))+'</p>':'')+'</article>'}).join('')}
+async function translateFa(text){
+  text=String(text||'').trim(); if(!text) return '';
+  if(/[آ-ی]/.test(text)) return text;
+  try{
+    const u='https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=fa&dt=t&q='+encodeURIComponent(text.slice(0,900));
+    const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw Error('translation');
+    const j=await r.json(); const t=(j[0]||[]).map(x=>x&&x[0]||'').join('');
+    return t||text;
+  }catch(e){return text}
+}
+async function load(){
+  refresh.disabled=true;refresh.textContent='در حال دریافت…';
+  list.innerHTML='<div class="fn-empty">در حال دریافت و ترجمهٔ خبرهای تازه…</div>';
+  try{
+    let r=await fetch('https://cryptocurrency.cv/api/news?limit=50',{cache:'no-store'});
+    if(!r.ok) throw Error('news');
+    let j=await r.json();data=Array.isArray(j)?j:(j.articles||j.data||j.results||[]);
+    if(!data.length) throw Error('empty');
+    // Translate only the newest 20 items to avoid excessive public translation requests.
+    await Promise.all(data.slice(0,10).map(async a=>{
+      const title=String(a.title||a.headline||'');
+      const desc=String(a.description||a.summary||'');
+      [a.titleFa,a.descFa]=await Promise.all([translateFa(title),desc?translateFa(desc.slice(0,500)):Promise.resolve('')]);
+    }));
+    render();
+  }catch(e){
+    list.innerHTML='<div class="fn-empty">خبر زنده یا سرویس ترجمه فعلاً در دسترس نیست. خبر ساختگی نمایش داده نمی‌شود؛ کمی بعد دوباره تلاش کنید.</div>';
+    risk.textContent='داده در دسترس نیست';high.textContent='—';updated.textContent='—';
+  }finally{refresh.disabled=false;refresh.textContent='↻ دریافت و ترجمهٔ خبرها'}
+}
+p.querySelectorAll('[data-fn-filter]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.fnFilter;p.querySelectorAll('[data-fn-filter]').forEach(x=>x.classList.toggle('active',x===b));render()}));refresh.addEventListener('click',load);load();setInterval(()=>{if(!refresh.disabled)load()},120000)})();
 </script>
 
 
@@ -450,8 +479,8 @@ p.querySelectorAll('[data-fn-filter]').forEach(b=>b.addEventListener('click',()=
   const reasons=[];let btc=null,baby=null,newsRisk=0,newsStatus='خبر در دسترس نیست',pressure=0,pressureValid=false;
   try{
    const [bkl,babkl]=await Promise.all([
-    json('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=15m&limit=80'),
-    json('https://api.binance.com/api/v3/klines?symbol=BABYDOGEUSDT&interval=15m&limit=80')
+    json('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=15m&limit=80'),
+    json('https://data-api.binance.vision/api/v3/klines?symbol=BABYDOGEUSDT&interval=15m&limit=80')
    ]);
    function parse(rows){return rows.map(x=>({o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5],q:+x[7],trades:+x[8],buy:+x[10]}));}
    btc=parse(bkl);baby=parse(babkl);
@@ -506,6 +535,48 @@ p.querySelectorAll('[data-fn-filter]').forEach(b=>b.addEventListener('click',()=
  }
  $('sc-refresh').addEventListener('click',load);load();
 })();
+</script>
+
+
+<style>
+#live-pump-panel{position:fixed;left:10px;top:105px;width:245px;max-height:72vh;overflow:auto;z-index:9999;background:#0d1726;color:#eef4ff;border:1px solid #31465f;border-radius:14px;padding:12px;box-shadow:0 8px 28px #0006;text-align:left;font:13px/1.5 system-ui,sans-serif}
+#live-pump-panel h3{margin:0 0 5px;font-size:15px}#live-pump-panel .pump-sub{font-size:11px;color:#9fb0c9;margin-bottom:8px}
+#live-pump-panel .pump-row{display:grid;grid-template-columns:1fr auto;gap:6px;padding:8px 0;border-top:1px solid #24364c}
+#live-pump-panel .pump-symbol{font-weight:700}#live-pump-panel .pump-vol{font-size:10px;color:#9fb0c9}
+#live-pump-panel .pump-up{color:#55e0a0;font-weight:700}#live-pump-panel .pump-down{color:#ff7d88}
+@media(max-width:760px){#live-pump-panel{position:relative;left:auto;top:auto;width:auto;max-height:320px;margin:12px 0;}}
+</style>
+<aside id="live-pump-panel" aria-live="polite">
+  <h3>🚀 ارزهای در حال پامپ</h3>
+  <div class="pump-sub" id="pump-status">در حال دریافت بازار زنده…</div>
+  <div id="pump-list">در حال بارگذاری…</div>
+  <div class="pump-sub">رتبه‌بندی بر اساس رشد ۲۴ساعته و حجم؛ رشد گذشته تضمین سود نیست.</div>
+</aside>
+<script>
+(()=>{
+ const panel=document.getElementById('live-pump-panel'),list=document.getElementById('pump-list'),status=document.getElementById('pump-status');
+ if(!panel||!list)return;
+ const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits: n<1?8:2});
+ async function updatePumps(){
+  try{
+   let r=await fetch('https://data-api.binance.vision/api/v3/ticker/24hr',{cache:'no-store'});
+   if(!r.ok) throw Error('ticker');
+   let all=await r.json();
+   let rows=all.filter(x=>x.symbol.endsWith('USDT')&&!/^(USDC|FDUSD|TUSD|USDP|DAI|EUR|BUSD)USDT$/.test(x.symbol))
+    .map(x=>({...x,pct:+x.priceChangePercent,vol:+x.quoteVolume,price:+x.lastPrice}))
+    .filter(x=>x.pct>=3 && x.vol>=250000)
+    .sort((a,b)=>b.pct-a.pct).slice(0,12);
+   if(!rows.length){list.textContent='فعلاً ارز واجد شرایطی پیدا نشد.'}
+   else list.innerHTML=rows.map(x=>'<div class="pump-row"><div><div class="pump-symbol">'+x.symbol.replace(/USDT$/,'')+'</div><div class="pump-vol">حجم: $'+fmt(x.vol)+'</div></div><div class="pump-up">+'+x.pct.toFixed(2)+'%<div style="font-size:10px;color:#b8c7d9;text-align:right">$'+fmt(x.price)+'</div></div></div>').join('');
+   status.textContent='آخرین بررسی: '+new Date().toLocaleTimeString('fa-IR')+' • به‌روزرسانی خودکار';
+  }catch(e){status.textContent='دادهٔ بازار در دسترس نیست؛ تلاش مجدد خودکار فعال است.';if(!list.dataset.failed){list.textContent='اتصال به API بازار ناموفق بود.';list.dataset.failed='1'}}
+ }
+ updatePumps();setInterval(updatePumps,15000);
+})();
+</script>
+<script>
+/* Keep the combined analysis fresh without requiring a manual page refresh. */
+(()=>{const b=document.getElementById('sc-refresh');if(b){setInterval(()=>{if(!b.disabled)b.click()},30000)}})();
 </script>
 
 </body>
