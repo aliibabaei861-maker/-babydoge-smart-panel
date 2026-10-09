@@ -1,34 +1,15 @@
-# 🐶 BabyDoge Smart Mobile V5
+# BabyDoge Smart Mobile V5.1
 
-پنل مستقل موبایلی برای تحلیل BabyDoge با داده‌های Binance و DEX Screener.
+پنل مستقل موبایل برای تحلیل BabyDoge با داده‌های عمومی Binance و DEX Screener.
 
-## GitHub Pages
+## قابلیت‌ها
+- قیمت زنده، فشار خرید/فروش، Order Book و نمودار فشار
+- RSI، EMA20/EMA50، ATR و حجم غیرعادی
+- شناسایی الگوهای کندلی رایج و نمایش سناریوی جهت برای ۱۵، ۳۰ و ۶۰ دقیقه
+- Entry/TP/SL راهنمایی‌شده با ATR، هشدار صوتی و وضعیت اتصال
 
-این پروژه استاتیک است و Node.js نمی‌خواهد.
+## انتشار در GitHub Pages
+فایل `index.html` را در ریشه‌ی مخزن نگه دارید و از Settings → Pages، منبع GitHub Actions را انتخاب کنید. Workflow باید در `.github/workflows/` باشد.
 
-1. یک Repository جدید در GitHub بساز، مثلاً `babydoge-smart-panel`.
-2. محتویات این پروژه را در ریشه Repository آپلود کن.
-3. برو به **Settings → Pages**.
-4. در **Build and deployment** گزینه **GitHub Actions** را انتخاب کن.
-5. Workflow موجود، سایت را با هر Push روی شاخه `main` منتشر می‌کند.
-6. آدرس سایت معمولاً:
-   `https://USERNAME.github.io/babydoge-smart-panel/`
-
-## امکانات
-
-- قیمت لحظه‌ای
-- Binance REST + WebSocket
-- فشار خرید/فروش و نمودار میله‌ای
-- Order Book imbalance
-- RSI / EMA20 / EMA50 / ATR
-- حجم غیرعادی و Fake Breakout
-- BUY / WAIT / SELL
-- Entry / TP1 / TP2 / SL
-- DEX Screener
-- آلارم صوتی
-- تاریخچه سیگنال
-- نمایش وضعیت و خطای اتصال
-
-برای آیفون، لینک HTTPS را در Safari باز کن و **Add to Home Screen** را بزن.
-
-این پروژه ابزار تحلیلی و هشدار است و معامله خودکار یا تضمین سود انجام نمی‌دهد.
+## محدودیت مهم
+سناریوی کندلی، پیش‌بینی قطعی یا احتمال آماری کالیبره‌شده نیست؛ امتیاز ترکیبی مبتنی بر الگو، روند، RSI و حجم است. قبل از استفاده برای معامله، آن را روی داده‌های تاریخی BabyDoge با کارمزد و لغزش واقعی بک‌تست کنید. پنل سود را تضمین نمی‌کند و معامله‌گری ریسک از دست‌دادن سرمایه دارد.

@@ -78,6 +78,20 @@ footer{color:#687794;font-size:11px;text-align:center;padding:14px}
     </div>
   </div>
 
+  <div class="card" id="candleForecastCard">
+    <div class="label">🕯️ تحلیل الگوی کندل و سناریوی ۵ تا ۶۰ دقیقه</div>
+    <div class="grid3" style="margin-top:10px">
+      <div class="mini"><span class="label">الگوی تشخیص‌داده‌شده</span><strong id="candlePattern">در انتظار داده</strong></div>
+      <div class="mini"><span class="label">جهت محتمل</span><strong id="candleBias">—</strong></div>
+      <div class="mini"><span class="label">قدرت نشانه‌ها</span><strong id="candleStrength">—</strong></div>
+      <div class="mini"><span class="label">سناریوی ۱۵ دقیقه</span><strong id="forecast15">—</strong></div>
+      <div class="mini"><span class="label">سناریوی ۳۰ دقیقه</span><strong id="forecast30">—</strong></div>
+      <div class="mini"><span class="label">سناریوی تا ۱ ساعت</span><strong id="forecast60">—</strong></div>
+    </div>
+    <div id="candleDetails" class="alert">با بسته‌شدن کندل‌ها به‌روزرسانی می‌شود.</div>
+    <div class="small">این درصدها احتمال آماریِ کالیبره‌شده نیستند؛ امتیاز ترکیبی الگو، روند، حجم و مومنتوم‌اند. قبل از استفاده باید با بک‌تستِ کارمزد و لغزش اعتبارسنجی شوند.</div>
+  </div>
+
   <div class="card">
     <div class="label">🌐 DEX Screener</div>
     <div class="grid3" style="margin-top:10px">
@@ -239,6 +253,42 @@ function atr(cs,n=14){
   for(let i=1;i<cs.length;i++) trs.push(Math.max(cs[i].h-cs[i].l,Math.abs(cs[i].h-cs[i-1].c),Math.abs(cs[i].l-cs[i-1].c)));
   return trs.slice(-n).reduce((a,b)=>a+b,0)/n;
 }
+function candlePattern(cs){
+  const a=cs.at(-1), b=cs.at(-2);
+  if(!a||!b) return {name:'داده ناکافی',dir:0,detail:'برای تحلیل به حداقل دو کندل نیاز است.'};
+  const range=Math.max(a.h-a.l,1e-12), body=Math.abs(a.c-a.o), upper=a.h-Math.max(a.o,a.c), lower=Math.min(a.o,a.c)-a.l;
+  const prevBody=Math.abs(b.c-b.o), bull=a.c>a.o, prevBull=b.c>b.o;
+  if(body/range<0.10) return {name:'دوجی (Doji)',dir:0,detail:'بدنه بسیار کوچک؛ بازار مردد است و تأیید کندل بعدی مهم است.'};
+  if(lower>=body*2 && upper<=body*0.8) return {name:'چکش (Hammer)',dir:1,detail:'سایه پایینی بلند می‌تواند نشانه رد قیمت‌های پایین باشد؛ در حمایت معتبرتر است.'};
+  if(upper>=body*2 && lower<=body*0.8) return {name:'ستاره ثاقب (Shooting Star)',dir:-1,detail:'سایه بالایی بلند می‌تواند نشانه رد قیمت‌های بالا باشد؛ نزدیک مقاومت معتبرتر است.'};
+  if(b.c<b.o && bull && a.o<=b.c && a.c>=b.o) return {name:'پوشای صعودی (Bullish Engulfing)',dir:1,detail:'بدنه صعودی، بدنه کندل نزولی قبل را پوشانده است.'};
+  if(prevBull && !bull && a.o>=b.c && a.c<=b.o) return {name:'پوشای نزولی (Bearish Engulfing)',dir:-1,detail:'بدنه نزولی، بدنه کندل صعودی قبل را پوشانده است.'};
+  if(bull && body/range>0.75) return {name:'کندل صعودی قدرتمند',dir:1,detail:'بدنه بزرگ و بسته‌شدن نزدیک سقف، نشانه مومنتوم صعودی است.'};
+  if(!bull && body/range>0.75) return {name:'کندل نزولی قدرتمند',dir:-1,detail:'بدنه بزرگ و بسته‌شدن نزدیک کف، نشانه مومنتوم نزولی است.'};
+  return {name:'الگوی واضحی نیست',dir:bull?1:-1,detail:'شکل کندل به‌تنهایی نشانه قوی نمی‌دهد؛ روند و حجم تعیین‌کننده‌ترند.'};
+}
+function updateCandleForecast(cs,e20,e50,R,vr){
+  const pat=candlePattern(cs), last=cs.at(-1), prev=cs.at(-2);
+  let up=0,down=0;
+  if(pat.dir>0) up+=pat.name.includes('الگوی واضحی')?1:2;
+  if(pat.dir<0) down+=pat.name.includes('الگوی واضحی')?1:2;
+  if(e20>e50) up+=1.5; else down+=1.5;
+  if(last.c>prev.c) up+=0.7; else if(last.c<prev.c) down+=0.7;
+  if(R>=52&&R<70) up+=0.8; else if(R<=48&&R>30) down+=0.8;
+  if(vr>=1.4){ if(last.c>last.o) up+=0.8; else down+=0.8; }
+  const total=up+down, upPct=total?Math.round(50+50*(up-down)/Math.max(total,1)):50;
+  const pct=Math.max(50,Math.min(85,upPct));
+  let dir='خنثی / انتظار', cls='wait';
+  if(up-down>=1.2){dir='تمایل صعودی';cls='buy'} else if(down-up>=1.2){dir='تمایل نزولی';cls='sell'}
+  $('candlePattern').textContent=pat.name; $('candleBias').textContent=dir; $('candleBias').className=cls;
+  $('candleStrength').textContent=(Math.round(Math.min(85,50+Math.abs(up-down)*8)))+'/100';
+  const short=up-down>=1.2?'صعود محتمل':down-up>=1.2?'نزول محتمل':'حرکت نامشخص';
+  $('forecast15').textContent=short;
+  $('forecast30').textContent=Math.abs(up-down)>=2?'ادامه '+(up>down?'صعود':'نزول'):'نیازمند تأیید';
+  $('forecast60').textContent=Math.abs(up-down)>=2.8?'تمایل '+(up>down?'صعودی':'نزولی'):'عدم قطعیت بالا';
+  $('candleDetails').textContent=pat.detail+' | RSI: '+fmt(R,1)+' | حجم نسبت به میانگین: '+(Number.isFinite(vr)?vr.toFixed(2)+'x':'—')+'. ابطال سناریو: بسته‌شدن کندل بعدی در خلاف جهت الگو یا شکستن کف/سقف اخیر.';
+}
+
 function analyze(){
   const cs=S.candles.filter(x=>x.closed||x===S.candles[S.candles.length-1]);
   if(cs.length<55)return;
@@ -246,6 +296,7 @@ function analyze(){
   $('rsi').textContent=fmt(R,1); $('ema20').textContent=fmt(e20,8); $('ema50').textContent=fmt(e50,8); $('atr').textContent=fmt(A,9);
   const recent=cs.slice(-20), avgV=recent.slice(0,-1).reduce((a,b)=>a+b.v,0)/Math.max(1,recent.length-1), vr=recent.at(-1).v/Math.max(avgV,1e-12);
   $('vol').textContent=vr.toFixed(2)+'x';
+  updateCandleForecast(cs,e20,e50,R,vr);
   const last=cs.at(-1), prev=cs.at(-2);
   const high20=Math.max(...cs.slice(-21,-1).map(x=>x.h)), low20=Math.min(...cs.slice(-21,-1).map(x=>x.l));
   const fake=(last.h>high20 && last.c<high20)||(last.l<low20 && last.c>low20);
