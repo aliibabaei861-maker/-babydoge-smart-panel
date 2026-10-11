@@ -8,36 +8,66 @@
 /* Premium profile + supercar hero */
 .hero-profile{position:relative;isolation:isolate;display:flex;align-items:center;gap:22px;min-height:190px;margin:0 0 15px;padding:18px 24px;border:1px solid #7c551c;border-radius:18px;overflow:hidden;background:radial-gradient(ellipse at 76% 40%,#16335c 0,transparent 38%),linear-gradient(110deg,#070b18,#0a1530 60%,#140e08);box-shadow:0 10px 36px #0005,inset 0 1px #ffcf6a20}
 .hero-profile:after{content:"";position:absolute;z-index:-1;right:22%;bottom:-80px;width:340px;height:150px;border-radius:50%;background:#00bfff18;filter:blur(22px)}
-.hero-photo-wrap{position:relative;flex:0 0 140px;width:140px;height:154px;border-radius:14px;overflow:hidden;border:1px solid #d9a64b;box-shadow:0 0 26px #ffb52b20}
+.hero-photo-wrap{position:relative;flex:0 0 115px;width:115px;height:132px;border-radius:14px;overflow:hidden;border:1px solid #d9a64b;box-shadow:0 0 26px #ffb52b20}
 .hero-photo{width:100%;height:100%;object-fit:cover;object-position:center 23%;display:block}
-.hero-copy{position:relative;z-index:2;max-width:460px}
+.hero-copy{position:relative;z-index:2;max-width:460px;direction:rtl;text-align:right}
 .hero-eyebrow{color:#ffd06a;font-size:11px;letter-spacing:1.5px;font-weight:bold;margin-bottom:8px}
 .hero-copy h2{font-size:clamp(20px,2.5vw,32px);margin:0 0 8px;color:#fff;line-height:1.45}
 .hero-copy h2 span{color:#ffc44e}
 .hero-copy p{color:#a8bbda;line-height:1.9;margin:0 0 12px}
 .hero-tags{display:flex;gap:8px;flex-wrap:wrap}.hero-tags span{border:1px solid #244b7a;background:#07162d;border-radius:30px;padding:6px 10px;font-size:11px;color:#d7e9ff}
-.supercar-art{position:absolute;z-index:0;right:3%;bottom:4px;width:34%;height:115px;opacity:.78;pointer-events:none}
+.supercar-art{position:absolute;z-index:0;left:2%;right:auto;bottom:4px;width:32%;height:105px;opacity:.78;pointer-events:none}
 @media(max-width:780px){.hero-profile{min-height:150px;padding:13px;gap:13px}.hero-photo-wrap{flex-basis:100px;width:100px;height:125px}.hero-copy p{font-size:11px}.supercar-art{width:42%;height:75px;right:0;opacity:.35}.hero-copy{max-width:calc(100% - 112px)}}
+
+
+/* Desktop-first terminal skin inspired by the requested reference */
+:root{--bg:#020714;--panel:#030d1c;--line:#07518b;--cyan:#00d7ff;--green:#00ff83;--red:#ff3d5f;--muted:#7fa6c9;--gold:#ffbf36;--text:#eff7ff}
+body{background:radial-gradient(ellipse at 50% -20%,#092c54 0,transparent 45%),#020714;font-family:Tahoma,"Segoe UI",Arial,sans-serif}
+.shell{max-width:none;width:100%;padding:10px 14px}
+.top{display:grid;grid-template-columns:minmax(420px,1fr) minmax(320px,1.15fr) auto;gap:18px;align-items:center;border-bottom:1px solid #06477b;padding:6px 5px 14px;margin-bottom:10px}
+.brand{order:2;justify-self:start}.brand h1{font-size:30px}.brand p{font-size:11px}
+.nav{order:3;grid-column:1/-1;justify-content:center;gap:10px}.nav button{padding:10px 22px;border-radius:22px;background:linear-gradient(180deg,#07182e,#030a18);border-color:#123c67;font-weight:bold}
+.live{order:1;justify-self:end}
+.hero-profile{display:flex;min-height:155px;margin:0 0 11px;padding:10px 15px;direction:ltr;justify-content:flex-start;gap:14px;background:radial-gradient(ellipse at 20% 50%,#5c350c55,transparent 48%),linear-gradient(100deg,#090e1a,#071326 65%,#120d05);border-color:#94651d}
+.layout{grid-template-columns:minmax(235px,21%) minmax(480px,1fr) minmax(310px,27%);gap:12px;align-items:start}
+.panel,.coin,.chart{border-color:#07518b;border-radius:11px;background:linear-gradient(150deg,#041326,#020914 82%);box-shadow:inset 0 1px #ffffff09,0 6px 22px #0005}
+.head{padding:12px 13px;font-size:14px}
+.strip{gap:10px}
+.coin{padding:13px;min-height:144px}
+.price{font-size:26px}
+.chartwrap{height:310px}
+.bottom{gap:9px}
+.mini{padding:12px}
+.signalstate{font-size:24px}
+.right .panel+#news{margin-top:12px}
+#news .head{gap:8px}
+#news-refresh{font-size:10px;padding:7px 9px}
+.newstitle{font-size:12px}
+.newsitem{padding:10px 12px}
+.pump{padding:10px 0}
+.promo{padding:14px}
+.footer{padding:12px}
+@media(min-width:1251px){.layout{grid-template-columns:21% minmax(500px,1fr) 27%}.left,.center,.right{min-width:0}.pump-list{padding:0 10px}.pump{grid-template-columns:28px minmax(60px,1fr) auto;gap:7px}.coinicon{height:28px;width:28px}.strip{grid-template-columns:1fr 1fr}.bottom{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1250px){.top{grid-template-columns:1fr auto}.brand{order:1}.live{order:2}.nav{order:3}.layout{grid-template-columns:230px minmax(0,1fr)}.right{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px}}
+@media(max-width:780px){.shell{min-width:0;padding:8px}.top{display:flex;flex-wrap:wrap}.layout{grid-template-columns:1fr}.right{grid-column:auto;display:flex;flex-direction:column}.nav{justify-content:flex-start;overflow:auto;flex-wrap:nowrap}.nav button{white-space:nowrap;padding:9px 13px}.strip{grid-template-columns:1fr 1fr}.bottom{grid-template-columns:1fr}.chartwrap{height:260px}}
 
 </style></head><body><div class="shell">
 <header class="top"><div class="brand"><div class="mascot">🐶</div><div><h1>Baby<span>Doge</span></h1><b>SMART PANEL PRO</b><p>تحلیل بازار کریپتو • داده‌های زنده</p></div></div><nav class="nav"><button class="active" data-scroll="top">⌂ داشبورد</button><button data-scroll="news">▤ اخبار فاندامنتال</button><button data-scroll="chart">⌁ تحلیل تکنیکال</button><button data-scroll="pumps">♨ پامپ‌ها</button></nav><div class="live"><span class="dot"></span> بازار زنده <span id="last-update">اتصال…</span></div></header>
-<section class="hero-profile" aria-label="معرفی صاحب پنل">
-  <div class="hero-photo-wrap"><img class="hero-photo" src="profile-photo.jpeg" alt="تصویر پروفایل" /></div>
-  <div class="hero-copy">
-    <div class="hero-eyebrow">BABYDOGE • SMART PANEL PRO</div>
-    <h2>تحلیل حرفه‌ای بازار، <span>در یک نگاه</span></h2>
-    <p>داشبورد هوشمند رمزارزها با قیمت‌های زنده، بررسی روند بیت‌کوین، تحلیل تکنیکال و پایش فرصت‌های بازار.</p>
-    <div class="hero-tags"><span>● بازار زنده</span><span>تحلیل ترکیبی</span><span>مدیریت ریسک</span></div>
-  </div>
-  <svg class="supercar-art" viewBox="0 0 420 150" role="img" aria-label="طرح تزئینی خودروی سوپراسپرت">
-    <defs><linearGradient id="carpaint" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#fff0b0"/><stop offset=".25" stop-color="#b98735"/><stop offset=".6" stop-color="#151e35"/><stop offset="1" stop-color="#050811"/></linearGradient></defs>
-    <path d="M22 105 L43 80 L99 65 L148 29 Q167 19 208 26 L264 43 L321 64 L380 78 L402 100 L394 119 L30 119 Z" fill="url(#carpaint)" stroke="#f7bc48" stroke-width="2"/>
-    <path d="M122 62 L158 34 Q173 27 205 32 L246 47 L278 63 Z" fill="#071222" stroke="#4b7a9f" stroke-width="2"/>
-    <path d="M284 66 L324 70 L363 82 L302 82 Z" fill="#071222" stroke="#4b7a9f" stroke-width="2"/>
-    <path d="M43 91 L87 82 L113 85 L83 94 Z" fill="#ffcf5d"/><path d="M344 91 L389 96 L392 103 L350 102 Z" fill="#ff5a44"/>
-    <circle cx="103" cy="116" r="24" fill="#060914" stroke="#657994" stroke-width="5"/><circle cx="103" cy="116" r="10" fill="#b9c8dc"/><circle cx="326" cy="116" r="24" fill="#060914" stroke="#657994" stroke-width="5"/><circle cx="326" cy="116" r="10" fill="#b9c8dc"/>
-    <path d="M20 138 Q180 130 405 137" fill="none" stroke="#f9b83e" stroke-width="2" opacity=".8"/>
-  </svg>
+<section class="hero-profile" aria-label="نمایه">
+ <div class="hero-photo-wrap"><img class="hero-photo" src="profile-photo.jpeg" alt="تصویر پروفایل" /></div>
+ <div class="hero-copy">
+  <div class="hero-eyebrow">SMART CRYPTO TERMINAL</div>
+  <h2>تحلیل حرفه‌ای بازار <span>با نمای دسکتاپ</span></h2>
+  <p>قیمت زنده، تحلیل بیت‌کوین، کندل‌ها و اخبار فاندامنتال در یک داشبورد.</p>
+  <div class="hero-tags"><span>● آنلاین</span><span>سیگنال ترکیبی</span></div>
+ </div>
+ <svg class="supercar-art" viewBox="0 0 420 150" role="img" aria-label="طرح خودروی سوپراسپرت">
+ <defs><linearGradient id="paint2" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#ffe39b"/><stop offset=".22" stop-color="#a66d26"/><stop offset=".6" stop-color="#1b2940"/><stop offset="1" stop-color="#030711"/></linearGradient></defs>
+ <path d="M16 108 L38 82 L94 65 L145 31 Q166 20 208 27 L260 43 L317 64 L378 78 L405 101 L395 120 L27 120Z" fill="url(#paint2)" stroke="#ffbf45" stroke-width="2"/>
+ <path d="M119 62 L157 35 Q173 28 205 33 L244 47 L276 63Z" fill="#061223" stroke="#4d7da3" stroke-width="2"/><path d="M282 66 L324 70 L363 82 L300 82Z" fill="#061223" stroke="#4d7da3" stroke-width="2"/>
+ <path d="M39 91 L85 82 L111 85 L81 95Z" fill="#ffce63"/><path d="M347 91 L389 96 L392 103 L351 102Z" fill="#ff4c46"/>
+ <circle cx="102" cy="116" r="24" fill="#050914" stroke="#75869e" stroke-width="5"/><circle cx="102" cy="116" r="10" fill="#d2ddeb"/><circle cx="326" cy="116" r="24" fill="#050914" stroke="#75869e" stroke-width="5"/><circle cx="326" cy="116" r="10" fill="#d2ddeb"/>
+ </svg>
 </section>
 
 <div class="layout" id="top">
